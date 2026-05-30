@@ -10,6 +10,15 @@ mvn spring-boot:run
 
 The API runs on `http://localhost:8080`.
 
+## Production configuration
+
+The app reads these environment variables in production:
+
+- `PORT`: HTTP port provided by the host.
+- `APP_CORS_ALLOWED_ORIGINS`: comma-separated frontend origins allowed to call the API.
+- `APP_ADMIN_EMAIL`: admin login email.
+- `APP_ADMIN_PASSWORD`: admin login password.
+
 ## Admin credentials
 
 - Email: `admin@itcareerboost.local`
