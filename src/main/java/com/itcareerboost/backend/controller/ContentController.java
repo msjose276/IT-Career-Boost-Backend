@@ -1,9 +1,11 @@
 package com.itcareerboost.backend.controller;
 
 import com.itcareerboost.backend.dto.DashboardResponse;
+import com.itcareerboost.backend.dto.NewsletterSubscriptionRequest;
 import com.itcareerboost.backend.dto.StateResponse;
 import com.itcareerboost.backend.model.Article;
 import com.itcareerboost.backend.model.Category;
+import com.itcareerboost.backend.model.NewsletterSubscription;
 import com.itcareerboost.backend.model.Tag;
 import com.itcareerboost.backend.service.AuthService;
 import com.itcareerboost.backend.service.ContentService;
@@ -52,6 +54,12 @@ public class ContentController {
     return contentService.findPublishedBySlug(slug);
   }
 
+  @PostMapping("/newsletter/subscriptions")
+  @ResponseStatus(HttpStatus.CREATED)
+  public NewsletterSubscription subscribe(@Valid @RequestBody NewsletterSubscriptionRequest request) {
+    return contentService.subscribeToNewsletter(request);
+  }
+
   @GetMapping("/admin/state")
   public StateResponse adminState(@RequestHeader(value = "Authorization", required = false) String authorization) {
     authService.requireAdmin(authorization);
@@ -62,6 +70,13 @@ public class ContentController {
   public DashboardResponse dashboard(@RequestHeader(value = "Authorization", required = false) String authorization) {
     authService.requireAdmin(authorization);
     return contentService.dashboard();
+  }
+
+  @GetMapping("/admin/newsletter/subscriptions")
+  public List<NewsletterSubscription> newsletterSubscriptions(
+      @RequestHeader(value = "Authorization", required = false) String authorization) {
+    authService.requireAdmin(authorization);
+    return contentService.newsletterSubscriptions();
   }
 
   @PostMapping("/admin/articles")

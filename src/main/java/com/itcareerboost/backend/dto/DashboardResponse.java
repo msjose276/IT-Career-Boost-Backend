@@ -9,6 +9,7 @@ public record DashboardResponse(
     int publishedArticles,
     long totalViews,
     int searches,
+    int newsletterSubscribers,
     List<Article> mostViewed,
     List<Article> recentlyPublished,
     List<CategoryMetric> categoryMetrics,

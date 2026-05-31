@@ -1,10 +1,12 @@
 package com.itcareerboost.backend.service;
 
 import com.itcareerboost.backend.dto.DashboardResponse;
+import com.itcareerboost.backend.dto.NewsletterSubscriptionRequest;
 import com.itcareerboost.backend.dto.StateResponse;
 import com.itcareerboost.backend.model.Article;
 import com.itcareerboost.backend.model.ArticleStatus;
 import com.itcareerboost.backend.model.Category;
+import com.itcareerboost.backend.model.NewsletterSubscription;
 import com.itcareerboost.backend.model.SearchEvent;
 import com.itcareerboost.backend.model.Tag;
 import com.itcareerboost.backend.util.Slug;
@@ -26,6 +28,7 @@ public class ContentService {
   private final List<Tag> tags = new ArrayList<>();
   private final List<SearchEvent> searches = new ArrayList<>();
   private final List<Article> deletedArticles = new ArrayList<>();
+  private final List<NewsletterSubscription> newsletterSubscriptions = new ArrayList<>();
 
   @PostConstruct
   void seed() {
@@ -100,6 +103,25 @@ public class ContentService {
     return tag;
   }
 
+  public synchronized NewsletterSubscription subscribeToNewsletter(NewsletterSubscriptionRequest request) {
+    String email = request.email().trim().toLowerCase(Locale.US);
+    return newsletterSubscriptions.stream()
+        .filter(subscription -> subscription.email().equals(email))
+        .findFirst()
+        .orElseGet(() -> {
+          NewsletterSubscription subscription = new NewsletterSubscription(
+              email,
+              Instant.now(),
+              request.source() == null || request.source().isBlank() ? "website" : request.source().trim());
+          newsletterSubscriptions.add(0, subscription);
+          return subscription;
+        });
+  }
+
+  public synchronized List<NewsletterSubscription> newsletterSubscriptions() {
+    return List.copyOf(newsletterSubscriptions);
+  }
+
   public synchronized DashboardResponse dashboard() {
     List<Article> published = articles.stream().filter(article -> article.getStatus() == ArticleStatus.published).toList();
     long totalViews = articles.stream().mapToLong(Article::getViews).sum();
@@ -126,6 +148,7 @@ public class ContentService {
         published.size(),
         totalViews,
         searches.size(),
+        newsletterSubscriptions.size(),
         mostViewed,
         recent,
         categoryMetrics,

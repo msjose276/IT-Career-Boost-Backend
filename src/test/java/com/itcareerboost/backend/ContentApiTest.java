@@ -53,6 +53,46 @@ class ContentApiTest {
   }
 
   @Test
+  void visitorsCanSubscribeToNewsletter() throws Exception {
+    mockMvc.perform(post("/api/newsletter/subscriptions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"Reader@Example.com\",\"source\":\"article\"}"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.email").value("reader@example.com"))
+        .andExpect(jsonPath("$.source").value("article"));
+  }
+
+  @Test
+  void newsletterSubscriptionRequiresValidEmail() throws Exception {
+    mockMvc.perform(post("/api/newsletter/subscriptions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"not-an-email\",\"source\":\"article\"}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void adminCanReadNewsletterSubscriptions() throws Exception {
+    mockMvc.perform(post("/api/newsletter/subscriptions")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"newsletter-admin@example.com\",\"source\":\"footer\"}"))
+        .andExpect(status().isCreated());
+
+    String response = mockMvc.perform(post("/api/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"email\":\"admin@itcareerboost.local\",\"password\":\"careerboost\"}"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    String token = response.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
+
+    mockMvc.perform(get("/api/admin/newsletter/subscriptions").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].email").value("newsletter-admin@example.com"));
+  }
+
+  @Test
   void adminCanLoginAndReadDashboard() throws Exception {
     String response = mockMvc.perform(post("/api/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
@@ -69,6 +109,7 @@ class ContentApiTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totalArticles").value(84))
         .andExpect(jsonPath("$.publishedArticles").value(84))
+        .andExpect(jsonPath("$.newsletterSubscribers", greaterThan(-1)))
         .andExpect(jsonPath("$.categoryMetrics", hasSize(12)))
         .andExpect(jsonPath("$.categoryMetrics[0].articles").value(7))
         .andExpect(jsonPath("$.totalViews", greaterThan(100000)));
